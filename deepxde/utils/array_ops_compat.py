@@ -32,7 +32,7 @@ def hstack(tup):
 
 
 def roll(a, shift, axis):
-    return tf.roll(a, shift, axis) if is_tensor(a) else np.roll(a, shift, axis=axis)
+    return bkd.roll(a, shift, axis) if is_tensor(a) else np.roll(a, shift, axis=axis)
 
 
 def zero_padding(array, pad_width):
@@ -46,5 +46,5 @@ def zero_padding(array, pad_width):
         )
         return indices, values, dense_shape
     if is_tensor(array):
-        return tf.pad(array, tf.constant(pad_width))
+        return bkd.from_numpy(np.pad(bkd.to_numpy(array), pad_width))
     return np.pad(array, pad_width)
