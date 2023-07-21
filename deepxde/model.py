@@ -93,6 +93,10 @@ class Model:
                 - For backend PyTorch:
 
                     - `StepLR <https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.StepLR.html>`_: ("step", step_size, gamma)
+                    - `CosineAnnealingLR <https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html>`_: ("cosine", T_max, eta_min)
+                    - `InverseTimeLR <https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/InverseTimeDecay>`_: ("inverse time", decay_steps, decay_rate)
+                    - `ExponentialLR <https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.ExponentialLR.html>`_: ("exponential", gamma)
+                    - `LambdaLR <https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LambdaLR.html>`_: ("lambda", lambda_fn: Callable[[step], float])
 
                 - For backend PaddlePaddle:
 
@@ -281,7 +285,9 @@ class Model:
             return self.net(inputs)
 
         def outputs_losses(training, inputs, targets, auxiliary_vars, losses_fn):
-            self.net.auxiliary_vars = auxiliary_vars
+            self.net.auxiliary_vars = None
+            if auxiliary_vars is not None:
+                self.net.auxiliary_vars = torch.as_tensor(auxiliary_vars)
             self.net.train(mode=training)
             if isinstance(inputs, tuple):
                 inputs = tuple(
@@ -909,8 +915,10 @@ class Model:
             y = utils.to_numpy(y)
         elif backend_name == "pytorch":
             self.net.eval()
-            inputs = torch.as_tensor(x)
-            inputs.requires_grad_()
+            if isinstance(x, tuple):
+                inputs = tuple(map(lambda x: torch.as_tensor(x).requires_grad_(), x))
+            else:
+                inputs = torch.as_tensor(x).requires_grad_()
             outputs = self.net(inputs)
             if utils.get_num_args(operator) == 2:
                 y = operator(inputs, outputs)
